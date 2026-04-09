@@ -27,30 +27,45 @@ function init() {
     newChatBtn.addEventListener('click', startNewChat);
     
     document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+    
+    // Use delegation for history items (more robust for dynamic content)
+    historyList.addEventListener('click', (e) => {
+        const item = e.target.closest('.history-item');
+        if (!item) return;
+        
+        const chatId = item.dataset.id;
+        
+        // Check if delete button was clicked
+        if (e.target.closest('.delete-chat-btn')) {
+            e.stopPropagation();
+            deleteConversation(chatId);
+        } else if (e.target.closest('.history-item-content')) {
+            loadChat(chatId);
+        }
+    });
+
     document.getElementById('clear-history-btn').addEventListener('click', clearAllConversations);
 }
 
 function renderHistory() {
     historyList.innerHTML = '';
+    // Pull fresh from storage to be absolutely sure
+    conversations = JSON.parse(localStorage.getItem('kognitos_chats') || '[]');
+    
     conversations.sort((a,b) => b.updatedAt - a.updatedAt).forEach(chat => {
         const item = document.createElement('div');
         item.className = `history-item ${chat.id === currentChatId ? 'active' : ''}`;
+        item.dataset.id = chat.id;
         
         item.innerHTML = `
             <div class="history-item-content">
                 <i class="fa-regular fa-message"></i>
-                <span>${chat.title}</span>
+                <span>${escapeHTML(chat.title)}</span>
             </div>
             <button class="delete-chat-btn" title="Delete Chat">
                 <i class="fa-solid fa-trash-can"></i>
             </button>
         `;
-
-        item.querySelector('.history-item-content').onclick = () => loadChat(chat.id);
-        item.querySelector('.delete-chat-btn').onclick = (e) => {
-            e.stopPropagation();
-            deleteConversation(chat.id);
-        };
 
         historyList.appendChild(item);
     });
@@ -60,12 +75,16 @@ function deleteConversation(id) {
     if (confirm('Delete this AI chat?')) {
         conversations = conversations.filter(c => c.id !== id);
         localStorage.setItem('kognitos_chats', JSON.stringify(conversations));
-        if (currentChatId === id) startNewChat();
-        else renderHistory();
+        if (currentChatId === id) {
+            startNewChat();
+        } else {
+            renderHistory();
+        }
     }
 }
 
-function clearAllConversations() {
+function clearAllConversations(e) {
+    if (e) e.stopPropagation();
     if (conversations.length === 0) return;
     if (confirm('Are you sure you want to clear ALL chat history?')) {
         conversations = [];
@@ -274,7 +293,6 @@ function renderFinalizedDetails(json) {
         // Find value with either exact key or lowercase key
         let val = json[m.key] !== undefined ? json[m.key] : json[m.key.toLowerCase()];
         if (val === undefined) {
-             // Try underscored version if any (e.g. "Result row count" -> "result_row_count")
              const snake = m.key.toLowerCase().replace(/\s+/g, '_');
              val = json[snake];
         }
@@ -289,21 +307,36 @@ function renderFinalizedDetails(json) {
     });
     html += `</div>`;
 
-    // Tables Section (Full Width)
-    const tableData = json['Tables'] || json['tables'];
-    if (tableData && tableData !== '-' && (!Array.isArray(tableData) || tableData.length > 0)) {
-        // Use recursive flattener to handle any level of Kognitos nesting
-        const cleanData = flattenKognitosTable(tableData);
+    // Dynamic Discovery: Show EVERY other piece of data Kognitos provides
+    // We don't want to "distinct" or hide anything
+    for (const key in json) {
+        // Skip keys already shown in the metrics or technical keys
+        const lowKey = key.toLowerCase();
+        if (['query', 'response_text', 'question_count', 'result_row_count', 'json_output'].includes(lowKey)) continue;
         
-        if (cleanData && cleanData.length > 0) {
+        const val = json[key];
+        if (val === null || val === undefined || val === '-') continue;
+
+        const flat = flattenKognitosTable(val);
+        
+        // If it's a table (list of objects)
+        if (Array.isArray(flat) && flat.length > 0 && typeof flat[0] === 'object' && flat[0] !== null) {
             html += `
                 <div class="finalized-table-section">
-                    <div class="finalized-label" style="margin-bottom: 12px;">SEARCH RESULTS</div>
+                    <div class="finalized-label" style="margin-top: 24px; margin-bottom: 12px;">${key.toUpperCase().replace(/_/g, ' ')}</div>
                     <div class="query-result-section">
                         <div class="query-result-table-wrapper">
-                            ${formatTableHTML(cleanData)}
+                            ${formatTableHTML(flat)}
                         </div>
                     </div>
+                </div>
+            `;
+        } else {
+            // If it's a single value or short list not already in metrics
+            html += `
+                <div class="finalized-table-section" style="margin-top: 15px;">
+                    <div class="finalized-label">${key.toUpperCase().replace(/_/g, ' ')}</div>
+                    <div class="finalized-value" style="margin-top: 5px; font-weight: 500;">${escapeHTML(String(val))}</div>
                 </div>
             `;
         }

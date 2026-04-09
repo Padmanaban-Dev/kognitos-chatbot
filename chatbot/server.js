@@ -3,18 +3,21 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 
-// Manually parse .env
-const env = {};
+// Prioritize process.env (for Vercel/Production) then fallback to manual .env parsing (for Local)
+let env = process.env;
 try {
-    const envContent = fs.readFileSync(path.join(__dirname, '.env'), 'utf-8');
-    envContent.split('\n').forEach(line => {
-        const parts = line.trim().split('=');
-        if (parts.length >= 2) {
-            env[parts[0]] = parts.slice(1).join('=');
-        }
-    });
+    const envPath = path.join(__dirname, '.env');
+    if (fs.existsSync(envPath)) {
+        const envContent = fs.readFileSync(envPath, 'utf-8');
+        envContent.split('\n').forEach(line => {
+            const parts = line.trim().split('=');
+            if (parts.length >= 2) {
+                env[parts[0]] = parts.slice(1).join('=');
+            }
+        });
+    }
 } catch (e) {
-    console.warn('.env file not found or unreadable');
+    // Silent fail if .env is missing, which is expected on Vercel
 }
 
 const ORG_ID = env['ORGANIZATION_ID'];
