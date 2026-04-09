@@ -94,7 +94,7 @@ const server = http.createServer((req, res) => {
         const runId = parts[3];
         const isEvents = parts[4] === 'events';
 
-        let targetPath = `/api/v1/organizations/${ORG_ID}/workspaces/${WORKSPACE_ID}/runs/${runId}`;
+        let targetPath = `/api/v1/organizations/${ORG_ID}/workspaces/${WORKSPACE_ID}/automations/${AUTOMATION_ID}/runs/${runId}`;
         
         // Handling events if requested separately for our specific UI streaming logic
         if (isEvents) {

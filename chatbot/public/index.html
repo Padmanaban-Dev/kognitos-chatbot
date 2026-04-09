@@ -3,58 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kognitos Chatbot</title>
-    <!-- Use Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <title>Kognitos AI Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="chat-container">
-        <!-- Header -->
-        <header class="chat-header">
-            <div class="header-info">
-                <div class="bot-avatar">
-                    <i class="fa-solid fa-robot"></i>
+    <div class="app-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <button id="new-chat-btn" class="new-chat-btn">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>New Chat</span>
+                </button>
+            </div>
+            
+            <div class="history-container">
+                <div class="history-header-row">
+                    <div class="history-label">Chat History</div>
+                    <button id="clear-history-btn" class="clear-all-btn" title="Clear All History">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
                 </div>
-                <div>
-                    <h2>Kognitos Assistant</h2>
-                    <span class="status"><span class="status-dot"></span> Online</span>
+                <div class="history-list" id="history-list">
+                    <!-- History items injected here -->
                 </div>
             </div>
-        </header>
+        </aside>
 
-        <!-- Chat History -->
-        <main class="chat-history" id="chat-history">
-            <div class="message bot">
-                <div class="message-content">
-                    <p>Hello! I am your Kognitos Assistant. How can I help you automate today?</p>
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-header">
+                <div class="automation-breadcrumb">
+                    <i class="fa-solid fa-bolt-lightning"></i>
+                    <span id="current-chat-title">New Request</span>
                 </div>
-                <div class="message-time">Just now</div>
+                <div class="header-actions">
+                    <button class="icon-btn" id="theme-toggle" title="Switch Theme"><i class="fa-solid fa-moon"></i></button>
+                    <button class="icon-btn"><i class="fa-solid fa-share-nodes"></i></button>
+                    <button class="icon-btn"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                </div>
+            </header>
+
+            <div class="chat-viewport" id="chat-history">
+                <div class="welcome-screen" id="welcome-screen">
+                    <div class="brand-logo-wrapper">
+                        <img src="logo.png" class="brand-logo-img" alt="Kognitos AI">
+                    </div>
+                    <p>Describe your requirement in natural language. The AI will analyze and process the query.</p>
+                    
+                    <div class="quick-prompts">
+                        <div class="prompt-card" onclick="setPrompt('Show me the list of unregistered clients')">
+                            <i class="fa-solid fa-users-slash"></i>
+                            <span>Unregistered client list</span>
+                        </div>
+                        <div class="prompt-card" onclick="setPrompt('What is the total count of clients across all ports?')">
+                            <i class="fa-solid fa-calculator"></i>
+                            <span>Total client aggregation</span>
+                        </div>
+                        <div class="prompt-card" onclick="setPrompt('Rank clients based on their inception date')">
+                            <i class="fa-solid fa-arrow-down-9-1"></i>
+                            <span>Sequence & Rank analysis</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Messages append here -->
             </div>
-            <!-- Dynamic messages will be appended here -->
+
+            <footer class="input-container">
+                <div class="input-wrapper">
+                    <div class="typing-indicator hidden" id="typing-indicator">
+                        <div class="dots"><span></span><span></span><span></span></div>
+                        <span id="event-text">Analyzing request...</span>
+                    </div>
+                    
+                    <div class="input-box">
+                        <textarea id="user-input" rows="1" placeholder="Type your request here..." autocomplete="off"></textarea>
+                        <button id="send-btn" class="send-btn" disabled>
+                            <i class="fa-solid fa-arrow-up"></i>
+                        </button>
+                    </div>
+                </div>
+            </footer>
         </main>
-
-        <!-- Typing Indicator (Hidden by default) -->
-        <div class="typing-indicator-container hidden" id="typing-container">
-            <div class="bot-avatar small">
-                <i class="fa-solid fa-robot"></i>
-            </div>
-            <div class="typing-bubble">
-                <div class="typing-dots">
-                    <span></span><span></span><span></span>
-                </div>
-                <div class="event-text" id="event-text">Starting automation...</div>
-            </div>
-        </div>
-
-        <!-- Input Area -->
-        <footer class="chat-input-area">
-            <input type="text" id="user-input" placeholder="Type your request in plain English..." autocomplete="off">
-            <button id="send-btn" title="Send Request">
-                <i class="fa-solid fa-paper-plane"></i>
-            </button>
-        </footer>
     </div>
     
     <script src="app.js"></script>
