@@ -5,10 +5,16 @@ const historyList = document.getElementById('history-list');
 const newChatBtn = document.getElementById('new-chat-btn');
 const welcomeScreen = document.getElementById('welcome-screen');
 
+const deleteModal = document.getElementById('delete-modal');
+const deleteChatName = document.getElementById('delete-chat-name');
+const deleteCancelBtn = document.getElementById('delete-cancel-btn');
+const deleteConfirmBtn = document.getElementById('delete-confirm-btn');
+
 let conversations = JSON.parse(localStorage.getItem('kognitos_chats') || '[]');
 let currentChatId = null;
 let isRunning = false;
 let currentBotMsgEl = null;
+let pendingDeleteId = null;
 
 init();
 
@@ -39,12 +45,35 @@ function init() {
         if (e.target.closest('.delete-chat-btn')) {
             e.stopPropagation();
             deleteConversation(chatId);
-        } else if (e.target.closest('.history-item-content')) {
+        } else {
             loadChat(chatId);
         }
     });
 
     document.getElementById('clear-history-btn').addEventListener('click', clearAllConversations);
+
+    deleteCancelBtn.addEventListener('click', () => {
+        deleteModal.classList.add('hidden');
+        pendingDeleteId = null;
+    });
+
+    deleteConfirmBtn.addEventListener('click', () => {
+        if (pendingDeleteId === 'ALL') {
+            conversations = [];
+            localStorage.setItem('kognitos_chats', JSON.stringify(conversations));
+            startNewChat();
+        } else if (pendingDeleteId) {
+            conversations = conversations.filter(c => c.id !== pendingDeleteId);
+            localStorage.setItem('kognitos_chats', JSON.stringify(conversations));
+            if (currentChatId === pendingDeleteId) {
+                startNewChat();
+            } else {
+                renderHistory();
+            }
+        }
+        deleteModal.classList.add('hidden');
+        pendingDeleteId = null;
+    });
 }
 
 function renderHistory() {
@@ -72,25 +101,22 @@ function renderHistory() {
 }
 
 function deleteConversation(id) {
-    if (confirm('Delete this AI chat?')) {
-        conversations = conversations.filter(c => c.id !== id);
-        localStorage.setItem('kognitos_chats', JSON.stringify(conversations));
-        if (currentChatId === id) {
-            startNewChat();
-        } else {
-            renderHistory();
-        }
-    }
+    const chat = conversations.find(c => c.id === id);
+    if (!chat) return;
+    pendingDeleteId = id;
+    deleteChatName.textContent = chat.title;
+    deleteModal.classList.remove('hidden');
 }
 
 function clearAllConversations(e) {
     if (e) e.stopPropagation();
-    if (conversations.length === 0) return;
-    if (confirm('Are you sure you want to clear ALL chat history?')) {
-        conversations = [];
-        localStorage.setItem('kognitos_chats', JSON.stringify(conversations));
-        startNewChat();
+    if (conversations.length === 0) {
+        alert("No history to clear.");
+        return;
     }
+    pendingDeleteId = 'ALL';
+    deleteChatName.textContent = "ALL chat history (cannot be undone)";
+    deleteModal.classList.remove('hidden');
 }
 
 function initTheme() {
