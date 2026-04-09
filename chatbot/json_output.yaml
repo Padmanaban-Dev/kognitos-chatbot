@@ -1,0 +1,194 @@
+query: share the list of unregistered clients
+question_count: 1
+tables:
+  - - first_name: Priya
+      primary_email: priya.nair@mail.com
+      last_name: Nair
+      ssn_last4digits: "2211"
+      mobile_phone: "5552011001"
+      date_of_birth_or_inception: 1992-04-11
+      fiduciary_id: F1005
+    - mobile_phone: "5552011001"
+      first_name: Priya
+      ssn_last4digits: "2211"
+      date_of_birth_or_inception: 1992-04-11
+      last_name: Nair
+      fiduciary_id: F1005
+      primary_email: priya.nair@mail.com
+    - primary_email: priya.nair@mail.com
+      last_name: Nair
+      mobile_phone: "5552011001"
+      date_of_birth_or_inception: 1992-04-11
+      ssn_last4digits: "2211"
+      fiduciary_id: F1005
+      first_name: Priya
+    - primary_email: david.wilson@mail.com
+      date_of_birth_or_inception: 1977-02-05
+      mobile_phone: None
+      fiduciary_id: F1008
+      first_name: David
+      last_name: Wilson
+      ssn_last4digits: "4499"
+    - ssn_last4digits: "4499"
+      mobile_phone: None
+      first_name: David
+      date_of_birth_or_inception: 1977-02-05
+      fiduciary_id: F1008
+      primary_email: david.wilson@mail.com
+      last_name: Wilson
+    - mobile_phone: None
+      first_name: David
+      ssn_last4digits: "4499"
+      date_of_birth_or_inception: 1977-02-05
+      last_name: Wilson
+      fiduciary_id: F1008
+      primary_email: david.wilson@mail.com
+    - primary_email: aarav.sharma@mail.com
+      last_name: Sharma
+      first_name: Aarav
+      mobile_phone: "5552011005"
+      ssn_last4digits: "1122"
+      date_of_birth_or_inception: 1993-03-11
+      fiduciary_id: F1011
+    - first_name: Aarav
+      last_name: Sharma
+      primary_email: aarav.sharma@mail.com
+      ssn_last4digits: "1122"
+      date_of_birth_or_inception: 1993-03-11
+      mobile_phone: "5552011005"
+      fiduciary_id: F1011
+    - mobile_phone: None
+      date_of_birth_or_inception: 1985-01-23
+      ssn_last4digits: "5566"
+      fiduciary_id: F1012
+      last_name: Martin
+      first_name: Olivia
+      primary_email: olivia.m@mail.com
+    - fiduciary_id: F1012
+      last_name: Martin
+      date_of_birth_or_inception: 1985-01-23
+      mobile_phone: None
+      primary_email: olivia.m@mail.com
+      first_name: Olivia
+      ssn_last4digits: "5566"
+    - ssn_last4digits: "4411"
+      fiduciary_id: F1013
+      primary_email: ethan.moore@mail.com
+      last_name: Moore
+      mobile_phone: "5552011006"
+      date_of_birth_or_inception: 1990-07-15
+      first_name: Ethan
+    - mobile_phone: "5552011006"
+      date_of_birth_or_inception: 1990-07-15
+      last_name: Moore
+      primary_email: ethan.moore@mail.com
+      fiduciary_id: F1013
+      ssn_last4digits: "4411"
+      first_name: Ethan
+    - primary_email: ethan.moore@mail.com
+      date_of_birth_or_inception: 1990-07-15
+      last_name: Moore
+      mobile_phone: "5552011006"
+      fiduciary_id: F1013
+      ssn_last4digits: "4411"
+      first_name: Ethan
+    - last_name: Thomas
+      mobile_phone: "5552011009"
+      date_of_birth_or_inception: 1997-05-16
+      first_name: Mia
+      primary_email: mia.t@mail.com
+      ssn_last4digits: "9981"
+      fiduciary_id: F1016
+    - fiduciary_id: F1016
+      date_of_birth_or_inception: 1997-05-16
+      first_name: Mia
+      mobile_phone: "5552011009"
+      last_name: Thomas
+      ssn_last4digits: "9981"
+      primary_email: mia.t@mail.com
+    - fiduciary_id: F1016
+      first_name: Mia
+      primary_email: mia.t@mail.com
+      last_name: Thomas
+      mobile_phone: "5552011009"
+      ssn_last4digits: "9981"
+      date_of_birth_or_inception: 1997-05-16
+    - date_of_birth_or_inception: 1991-09-18
+      first_name: Isabella
+      last_name: Jackson
+      mobile_phone: "5552011010"
+      primary_email: bella.j@mail.com
+      fiduciary_id: F1017
+      ssn_last4digits: "3344"
+    - fiduciary_id: F1017
+      date_of_birth_or_inception: 1991-09-18
+      mobile_phone: "5552011010"
+      first_name: Isabella
+      last_name: Jackson
+      primary_email: bella.j@mail.com
+      ssn_last4digits: "3344"
+    - primary_email: charlotte.h@mail.com
+      fiduciary_id: F1019
+      date_of_birth_or_inception: 1979-02-14
+      first_name: Charlotte
+      last_name: Harris
+      mobile_phone: "5552011011"
+      ssn_last4digits: "7722"
+    - ssn_last4digits: "7722"
+      fiduciary_id: F1019
+      mobile_phone: "5552011011"
+      date_of_birth_or_inception: 1979-02-14
+      first_name: Charlotte
+      primary_email: charlotte.h@mail.com
+      last_name: Harris
+    - primary_email: elijah.y@mail.com
+      mobile_phone: "5552011014"
+      last_name: Young
+      ssn_last4digits: "6221"
+      date_of_birth_or_inception: 1989-07-07
+      first_name: Elijah
+      fiduciary_id: F1022
+    - last_name: Young
+      date_of_birth_or_inception: 1989-07-07
+      ssn_last4digits: "6221"
+      first_name: Elijah
+      fiduciary_id: F1022
+      primary_email: elijah.y@mail.com
+      mobile_phone: "5552011014"
+    - mobile_phone: None
+      ssn_last4digits: "1199"
+      date_of_birth_or_inception: 1996-10-02
+      fiduciary_id: F1023
+      last_name: King
+      primary_email: amelia.k@mail.com
+      first_name: Amelia
+    - date_of_birth_or_inception: 1996-10-02
+      ssn_last4digits: "1199"
+      last_name: King
+      fiduciary_id: F1023
+      primary_email: amelia.k@mail.com
+      mobile_phone: None
+      first_name: Amelia
+    - ssn_last4digits: "9001"
+      first_name: Lucas
+      date_of_birth_or_inception: 1994-01-19
+      fiduciary_id: F1024
+      last_name: Wright
+      primary_email: lucas.w@mail.com
+      mobile_phone: "5552011015"
+    - last_name: Wright
+      date_of_birth_or_inception: 1994-01-19
+      first_name: Lucas
+      ssn_last4digits: "9001"
+      mobile_phone: "5552011015"
+      fiduciary_id: F1024
+      primary_email: lucas.w@mail.com
+    - last_name: Wright
+      date_of_birth_or_inception: 1994-01-19
+      ssn_last4digits: "9001"
+      primary_email: lucas.w@mail.com
+      first_name: Lucas
+      fiduciary_id: F1024
+      mobile_phone: "5552011015"
+result_row_count: 48
+response_text: 27 record(s) found.
