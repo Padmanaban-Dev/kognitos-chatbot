@@ -6,7 +6,7 @@ const eventText = document.getElementById('event-text');
 
 let isRunning = false;
 
-function appendMessage(sender, text, isJson = false) {
+function appendMessage(sender, text, isJson = false, isError = false) {
     const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     
     const messageDiv = document.createElement('div');
@@ -18,7 +18,7 @@ function appendMessage(sender, text, isJson = false) {
     }
 
     messageDiv.innerHTML = `
-        <div class="message-content">
+        <div class="message-content ${isError ? 'error' : ''}">
             ${contentHtml}
         </div>
         <div class="message-time">${time}</div>
@@ -114,7 +114,7 @@ async function handleSend() {
         await pollRun(runId);
         
     } catch (err) {
-        appendMessage('bot', `Error: ${err.message}`);
+        appendMessage('bot', `Error: ${err.message}`, false, true);
         setTyping(false);
         isRunning = false;
         sendBtn.disabled = false;
@@ -168,7 +168,7 @@ async function pollRun(runId) {
                 } else if (result.status === "failed") {
                     completed = true;
                     setTyping(false);
-                    appendMessage('bot', `Automation failed.`);
+                    appendMessage('bot', `Automation failed.`, false, true);
                 }
             }
 
