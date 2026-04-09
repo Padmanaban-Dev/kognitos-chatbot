@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kognitos Chatbot</title>
+    <!-- Use Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="chat-container">
+        <!-- Header -->
+        <header class="chat-header">
+            <div class="header-info">
+                <div class="bot-avatar">
+                    <i class="fa-solid fa-robot"></i>
+                </div>
+                <div>
+                    <h2>Kognitos Assistant</h2>
+                    <span class="status"><span class="status-dot"></span> Online</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Chat History -->
+        <main class="chat-history" id="chat-history">
+            <div class="message bot">
+                <div class="message-content">
+                    <p>Hello! I am your Kognitos Assistant. How can I help you automate today?</p>
+                </div>
+                <div class="message-time">Just now</div>
+            </div>
+            <!-- Dynamic messages will be appended here -->
+        </main>
+
+        <!-- Typing Indicator (Hidden by default) -->
+        <div class="typing-indicator-container hidden" id="typing-container">
+            <div class="bot-avatar small">
+                <i class="fa-solid fa-robot"></i>
+            </div>
+            <div class="typing-bubble">
+                <div class="typing-dots">
+                    <span></span><span></span><span></span>
+                </div>
+                <div class="event-text" id="event-text">Starting automation...</div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <footer class="chat-input-area">
+            <input type="text" id="user-input" placeholder="Type your request in plain English..." autocomplete="off">
+            <button id="send-btn" title="Send Request">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </footer>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>
