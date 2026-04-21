@@ -1,219 +1,238 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kognitos AI</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <meta name="description" content="FIDO AI — Enterprise Intelligence Platform for Financial Data Operations">
+    <title>FIDO AI — Financial Intelligence</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
-    <div class="app-layout">
-        
-        <!-- SIDEBAR -->
-        <aside class="sidebar" id="sidebar">
-            <!-- Sidebar Header -->
-            <div class="sidebar-header">
-                <div class="sidebar-brand-title">
-                    <i class="fa-solid fa-bolt" style="color:var(--btn-primary);"></i>
-                    <span>AI Assistant</span>
+<div class="app-layout">
+
+    <!-- ══════════ SIDEBAR ══════════ -->
+    <aside class="sidebar" id="sidebar">
+
+        <!-- Brand Header -->
+        <div class="sidebar-header">
+            <div class="sidebar-brand-title">
+                <div class="brand-logo-wrap">
+                    <i class="fa-solid fa-database"></i>
                 </div>
-                <button class="ghost-btn toggle-btn" id="sidebar-close" title="Close sidebar" style="display:flex;align-items:center;justify-content:center;color:var(--sidebar-muted);">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M16 4H8C5.79086 4 4 5.79086 4 8V16C4 18.2091 5.79086 20 8 20H16C18.2091 20 20 18.2091 20 16V8C20 5.79086 18.2091 4 16 4ZM8 5.5H10.5V18.5H8C6.61929 18.5 5.5 17.3807 5.5 16V8C5.5 6.61929 6.61929 5.5 8 5.5ZM12 5.5H16C17.3807 5.5 18.5 6.61929 18.5 8V16C18.5 17.3807 17.3807 18.5 16 18.5H12V5.5Z" fill="currentColor"></path></svg>
+                <div class="brand-text">
+                    <span class="brand-name">FIDO AI</span>
+                    <span class="brand-tagline">Intelligence Platform</span>
+                </div>
+            </div>
+            <button class="toggle-btn" id="sidebar-close" title="Collapse sidebar">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M16 4H8C5.79 4 4 5.79 4 8v8c0 2.21 1.79 4 4 4h8c2.21 0 4-1.79 4-4V8c0-2.21-1.79-4-4-4zM8 5.5h2.5v13H8a2.5 2.5 0 01-2.5-2.5V8A2.5 2.5 0 018 5.5zm4 0H16A2.5 2.5 0 0118.5 8v8a2.5 2.5 0 01-2.5 2.5h-4V5.5z" fill="currentColor"/></svg>
+            </button>
+        </div>
+
+        <!-- New Chat -->
+        <div class="sidebar-top-action">
+            <button class="big-new-chat-btn" id="new-chat-btn">
+                <div class="new-chat-left">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>New Conversation</span>
+                </div>
+                <i class="fa-solid fa-pen-to-square" style="font-size:0.8rem; opacity:0.6;"></i>
+            </button>
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <!-- History -->
+        <div class="sidebar-content">
+            <div class="history-label-row" id="history-accordion-toggle">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <i class="fa-solid fa-chevron-down" id="history-chevron" style="font-size:0.65rem; color:var(--sb-muted); transition:transform 0.2s;"></i>
+                    <span class="history-title">Recent Sessions</span>
+                </div>
+                <button class="clear-history ghost-btn" id="clear-history-btn" title="Clear all history">
+                    <i class="fa-solid fa-trash-can"></i>
                 </button>
             </div>
-
-            <!-- Big Prominent New Chat Button -->
-            <div class="sidebar-top-action">
-                <button class="big-new-chat-btn" id="new-chat-btn">
-                    <div class="new-chat-left">
-                        <i class="fa-solid fa-plus"></i>
-                        <span>New chat</span>
-                    </div>
-                </button>
-            </div>
-
-            <div class="sidebar-content">
-                <div class="history-label-row" id="history-accordion-toggle">
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <i class="fa-solid fa-chevron-down" id="history-chevron" style="transform: rotate(0deg); transition: transform 0.2s;"></i>
-                        <span class="history-title">Chat history</span>
-                    </div>
-                    <button class="ghost-btn clear-history" id="clear-history-btn" title="Clear all history">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
+            <div id="history-list-wrapper">
+                <div class="history-list" id="history-list">
+                    <!-- History items populate here -->
                 </div>
-                <div class="history-list-container" id="history-list-wrapper">
-                    <div class="history-list" id="history-list">
-                        <!-- History items populate here -->
-                    </div>
-                </div>
-            </div>
-
-            <div class="sidebar-footer">
-                <button class="footer-item" id="theme-toggle">
-                    <i class="fa-solid fa-moon" id="theme-icon"></i>
-                    <span>Dark mode</span>
-                </button>
-            </div>
-        </aside>
-
-        <!-- MAIN CONTENT -->
-        <main class="main-content">
-            <header class="main-header">
-                <div class="header-left">
-                    <!-- Hamburger / Sidebar toggle for when sidebar is closed -->
-                    <button class="ghost-btn open-sidebar-btn hidden" id="sidebar-open" title="Open sidebar" style="display:flex;align-items:center;justify-content:center;">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M16 4H8C5.79086 4 4 5.79086 4 8V16C4 18.2091 5.79086 20 8 20H16C18.2091 20 20 18.2091 20 16V8C20 5.79086 18.2091 4 16 4ZM8 5.5H10.5V18.5H8C6.61929 18.5 5.5 17.3807 5.5 16V8C5.5 6.61929 6.61929 5.5 8 5.5ZM12 5.5H16C17.3807 5.5 18.5 6.61929 18.5 8V16C18.5 17.3807 17.3807 18.5 16 18.5H12V5.5Z" fill="currentColor"></path></svg>
-                    </button>
-                    <div class="model-selector">
-                        <span>AI Assistant</span>
-                    </div>
-                </div>
-                <div class="header-right">
-                    <i class="fa-solid fa-share-from-square"></i>
-                </div>
-            </header>
-
-            <div class="chat-container">
-                <div class="chat-scroll-area" id="chat-history">
-                    <!-- WELCOME SCREEN -->
-                    <div class="welcome-screen" id="welcome-screen">
-                        <div class="brand-avatar">
-                            <i class="fa-solid fa-bolt"></i>
-                        </div>
-                        <h2>How can I help you today?</h2>
-                        
-                        <div class="prompt-grid">
-                            <button class="prompt-btn" onclick="setPrompt('Give me email IDs of clients who have ACTIVE profile status and Investment Accounts')">
-                                <div class="prompt-title">Active Client Search</div>
-                                <div class="prompt-sub">Filter by status and account type</div>
-                            </button>
-                            <button class="prompt-btn" onclick="setPrompt('Show clients whose profile is DEACTIVATED but still have OPEN accounts')">
-                                <div class="prompt-title">Account Mismatch</div>
-                                <div class="prompt-sub">Identify potential data discrepancies</div>
-                            </button>
-                            <button class="prompt-btn" onclick="setPrompt('Is Sophia Taylor (F1009) present? Also what is her profile status?')">
-                                <div class="prompt-title">Individual Lookup</div>
-                                <div class="prompt-sub">Check status for specific client ID</div>
-                            </button>
-                            <button class="prompt-btn" onclick="setPrompt('List all clients with Estate accounts')">
-                                <div class="prompt-title">Portfolio Overview</div>
-                                <div class="prompt-sub">Summarize estate account holders</div>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="input-area">
-                <div class="input-wrapper">
-                    <textarea id="user-input" rows="1" placeholder="Type your request here..."></textarea>
-                    <button class="send-btn" id="send-btn" disabled>
-                        <i class="fa-solid fa-arrow-up"></i>
-                    </button>
-                </div>
-                <div class="disclaimer">AI can make mistakes. Consider verifying important information.</div>
-            </div>
-        </main>
-    </div>
-
-    <div class="modal-overlay hidden" id="delete-modal">
-        <div class="modal-container">
-            <h3 class="modal-title">Delete chat?</h3>
-            <p class="modal-body">This will permanently delete "<strong id="delete-chat-name"></strong>".</p>
-            <div class="modal-actions">
-                <button class="modal-btn ghost" id="delete-cancel-btn">Cancel</button>
-                <button class="modal-btn danger" id="delete-confirm-btn">Delete</button>
             </div>
         </div>
+
+        <!-- Footer -->
+        <div class="sidebar-footer">
+            <button class="footer-item" id="theme-toggle">
+                <i class="fa-solid fa-moon" id="theme-icon"></i>
+                <span>Dark Mode</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- ══════════ MAIN ══════════ -->
+    <main class="main-content">
+
+        <!-- Top Header -->
+        <header class="main-header">
+            <div class="header-left">
+                <button class="open-sidebar-btn hidden" id="sidebar-open" title="Open sidebar" style="display:flex;align-items:center;justify-content:center;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M16 4H8C5.79 4 4 5.79 4 8v8c0 2.21 1.79 4 4 4h8c2.21 0 4-1.79 4-4V8c0-2.21-1.79-4-4-4zM8 5.5h2.5v13H8a2.5 2.5 0 01-2.5-2.5V8A2.5 2.5 0 018 5.5zm4 0H16A2.5 2.5 0 0118.5 8v8a2.5 2.5 0 01-2.5 2.5h-4V5.5z" fill="currentColor"/></svg>
+                </button>
+                <div class="model-selector">Financial Intelligence</div>
+            </div>
+            <div class="header-right">
+                <div class="header-badge">
+                    <div class="status-dot"></div>
+                    <span>Connected</span>
+                </div>
+                <button class="header-icon-btn" title="Share conversation">
+                    <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Chat Area -->
+        <div class="chat-container">
+            <div class="chat-scroll-area" id="chat-history">
+
+                <!-- WELCOME SCREEN -->
+                <div class="welcome-screen" id="welcome-screen">
+                    <!-- Animated avatar -->
+                    <div class="brand-avatar">
+                        <div class="brand-avatar-ring"></div>
+                        <div class="brand-avatar-inner">
+                            <i class="fa-solid fa-database"></i>
+                        </div>
+                    </div>
+
+                    <p class="welcome-eyebrow">FIDO AI — Financial Data Operations</p>
+                    <h2>How can I help you today?</h2>
+                    <p class="welcome-sub">Ask me anything about your client data — profile lookups, account analysis, compliance checks, and more.</p>
+
+                    <div class="prompt-grid">
+                        <button class="prompt-btn" onclick="setPrompt('Give me email IDs of clients who have ACTIVE profile status and Investment Accounts')">
+                            <div class="prompt-icon"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
+                            <div class="prompt-title">Active Client Search</div>
+                            <div class="prompt-sub">Filter by status and account type</div>
+                        </button>
+                        <button class="prompt-btn" onclick="setPrompt('Show clients whose profile is DEACTIVATED but still have OPEN accounts')">
+                            <div class="prompt-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                            <div class="prompt-title">Account Mismatch</div>
+                            <div class="prompt-sub">Identify potential data discrepancies</div>
+                        </button>
+                        <button class="prompt-btn" onclick="setPrompt('Is Sophia Taylor (F1009) present? Also what is her profile status?')">
+                            <div class="prompt-icon"><i class="fa-solid fa-user-check"></i></div>
+                            <div class="prompt-title">Individual Lookup</div>
+                            <div class="prompt-sub">Check status for a specific client ID</div>
+                        </button>
+                        <button class="prompt-btn" onclick="setPrompt('List all clients with Estate accounts')">
+                            <div class="prompt-icon"><i class="fa-solid fa-landmark"></i></div>
+                            <div class="prompt-title">Portfolio Overview</div>
+                            <div class="prompt-sub">Summarize estate account holders</div>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="input-area">
+            <div class="input-wrapper">
+                <textarea id="user-input" rows="1" placeholder="Ask about clients, accounts, or data queries..."></textarea>
+                <button class="send-btn" id="send-btn" disabled>
+                    <i class="fa-solid fa-arrow-up"></i>
+                </button>
+            </div>
+
+        </div>
+
+    </main>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal-overlay hidden" id="delete-modal">
+    <div class="modal-container">
+        <h3 class="modal-title">Delete conversation?</h3>
+        <p class="modal-body">This will permanently remove "<strong id="delete-chat-name"></strong>" from your session history.</p>
+        <div class="modal-actions">
+            <button class="modal-btn ghost" id="delete-cancel-btn">Cancel</button>
+            <button class="modal-btn danger" id="delete-confirm-btn">
+                <i class="fa-solid fa-trash-can" style="margin-right:6px;"></i>Delete
+            </button>
+        </div>
     </div>
+</div>
 
-    <script src="app.js"></script>
-    <script>
-        // Sidebar Toggle Logic
-        const sidebar = document.getElementById('sidebar');
-        const sidebarOpenBtn = document.getElementById('sidebar-open');
-        const sidebarCloseBtn = document.getElementById('sidebar-close');
-        
-        let isCollapsed = localStorage.getItem('sidebar_collapsed') === 'true';
+<script src="app.js"></script>
+<script>
+    /* ── Sidebar Toggle ── */
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOpenBtn = document.getElementById('sidebar-open');
+    const sidebarCloseBtn = document.getElementById('sidebar-close');
 
-        function setSidebarState(collapsed) {
-            isCollapsed = collapsed;
-            localStorage.setItem('sidebar_collapsed', collapsed);
-            if (collapsed) {
-                sidebar.classList.add('collapsed');
-                sidebarOpenBtn.classList.remove('hidden');
-            } else {
-                sidebar.classList.remove('collapsed');
-                sidebarOpenBtn.classList.add('hidden');
-            }
+    let isCollapsed = localStorage.getItem('sidebar_collapsed') === 'true';
+
+    function setSidebarState(collapsed) {
+        isCollapsed = collapsed;
+        localStorage.setItem('sidebar_collapsed', collapsed);
+        if (collapsed) {
+            sidebar.classList.add('collapsed');
+            sidebarOpenBtn.classList.remove('hidden');
+        } else {
+            sidebar.classList.remove('collapsed');
+            sidebarOpenBtn.classList.add('hidden');
         }
+    }
+    setSidebarState(isCollapsed);
+    sidebarCloseBtn.addEventListener('click', () => setSidebarState(true));
+    sidebarOpenBtn.addEventListener('click', () => setSidebarState(false));
 
-        // Initialize state
-        setSidebarState(isCollapsed);
+    /* ── New Chat ── */
+    const newChatBtnEl = document.getElementById('new-chat-btn');
+    if (newChatBtnEl) newChatBtnEl.addEventListener('click', () => { if (typeof startNewChat === 'function') startNewChat(); });
 
-        sidebarCloseBtn.addEventListener('click', () => setSidebarState(true));
-        sidebarOpenBtn.addEventListener('click', () => setSidebarState(false));
+    /* ── History Accordion ── */
+    const historyToggle   = document.getElementById('history-accordion-toggle');
+    const historyWrapper  = document.getElementById('history-list-wrapper');
+    const historyChevron  = document.getElementById('history-chevron');
+    let historyExpanded = true;
+    historyToggle.addEventListener('click', (e) => {
+        if (e.target.closest('#clear-history-btn')) return;
+        historyExpanded = !historyExpanded;
+        historyWrapper.style.display = historyExpanded ? 'block' : 'none';
+        historyChevron.style.transform = historyExpanded ? 'rotate(0deg)' : 'rotate(-90deg)';
+    });
 
-        // New Chat Buttons
-        const newChatBtnEl = document.getElementById('new-chat-btn');
-        if (newChatBtnEl) {
-            newChatBtnEl.addEventListener('click', () => { if (typeof startNewChat === 'function') startNewChat(); });
-        }
+    /* ── Theme Toggle ── */
+    const themeBtn  = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
 
-        // Accordion for History
-        const historyToggle = document.getElementById('history-accordion-toggle');
-        const historyWrapper = document.getElementById('history-list-wrapper');
-        const historyChevron = document.getElementById('history-chevron');
-        
-        let historyExpanded = true;
-        historyToggle.addEventListener('click', (e) => {
-            // Don't trigger if clicked on the trash can
-            if (e.target.closest('#clear-history-btn')) return;
-            
-            historyExpanded = !historyExpanded;
-            if (historyExpanded) {
-                historyWrapper.style.display = 'block';
-                historyChevron.style.transform = 'rotate(0deg)';
-            } else {
-                historyWrapper.style.display = 'none';
-                historyChevron.style.transform = 'rotate(-90deg)';
-            }
-        });
+    themeBtn.addEventListener('click', toggleTheme);
+    window.toggleTheme = function () {
+        const cur    = document.documentElement.getAttribute('data-theme');
+        const target = cur === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', target);
+        localStorage.setItem('kognitos_theme', target);
+        updateThemeUI(target);
+    };
 
-
-        // Theme Toggle Hook 
-        const themeBtn = document.getElementById('theme-toggle');
-        const themeIcon = document.getElementById('theme-icon');
-
-        themeBtn.addEventListener('click', toggleTheme);
-
-        // Update exact icon within the window function
-        const originalToggle = toggleTheme;
-        window.toggleTheme = function() {
-            const current = document.documentElement.getAttribute('data-theme');
-            const target = current === 'light' ? 'dark' : 'light';
-            document.documentElement.setAttribute('data-theme', target);
-            localStorage.setItem('kognitos_theme', target);
-
-            if (target === 'dark') {
-                themeIcon.className = 'fa-solid fa-sun';
-                themeBtn.querySelector('span').textContent = 'Light mode';
-            } else {
-                themeIcon.className = 'fa-solid fa-moon';
-                themeBtn.querySelector('span').textContent = 'Dark mode';
-            }
-        };
-
-        // Sync initial state
-        const initialTheme = localStorage.getItem('kognitos_theme') || 'light';
-        document.documentElement.setAttribute('data-theme', initialTheme);
-        if (initialTheme === 'dark') {
+    function updateThemeUI(theme) {
+        if (theme === 'dark') {
             themeIcon.className = 'fa-solid fa-sun';
-            themeBtn.querySelector('span').textContent = 'Light mode';
+            themeBtn.querySelector('span').textContent = 'Light Mode';
+        } else {
+            themeIcon.className = 'fa-solid fa-moon';
+            themeBtn.querySelector('span').textContent = 'Dark Mode';
         }
-    </script>
+    }
+
+    const initialTheme = localStorage.getItem('kognitos_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', initialTheme);
+    updateThemeUI(initialTheme);
+</script>
 </body>
 </html>

@@ -303,85 +303,111 @@ function formatResultUI(data) {
 }
 
 function renderFinalizedDetails(json) {
-    const metrics = [
-        { key: 'Response text', label: 'AI RESPONSE', span: 2 },
-        { key: 'Result row count', label: 'RECORDS FOUND', span: 1 }
-    ];
+    // ── Extract well-known keys ──
+    const getVal = (keys) => {
+        for (const k of keys) {
+            if (json[k] !== undefined) return json[k];
+            const snake = k.toLowerCase().replace(/\s+/g, '_');
+            if (json[snake] !== undefined) return json[snake];
+        }
+        return null;
+    };
+
+    const aiResponse  = getVal(['Response text', 'response_text']);
+    const recordCount = getVal(['Result row count', 'result_row_count']);
 
     let html = `<div class="finalized-container">`;
-    html += `<div class="finalized-header"><i class="fa-solid fa-circle-info"></i> Processed Information</div>`;
-    
-    // Top Grid for Metrics
-    html += `<div class="finalized-metrics-grid">`;
-    metrics.forEach(m => {
-        // Find value with either exact key or lowercase key
-        let val = json[m.key] !== undefined ? json[m.key] : json[m.key.toLowerCase()];
-        if (val === undefined) {
-             const snake = m.key.toLowerCase().replace(/\s+/g, '_');
-             val = json[snake];
-        }
-        val = val !== undefined ? val : '-';
-        
-        html += `
-            <div class="finalized-metric-item" style="grid-column: span ${m.span}">
-                <div class="finalized-label">${m.label}</div>
-                <div class="finalized-value">${escapeHTML(String(val))}</div>
-            </div>
-        `;
-    });
-    html += `</div>`;
 
-    // Dynamic Discovery: Show EVERY other piece of data Kognitos provides
-    // We don't want to "distinct" or hide anything
+    // ── Header ──
+    html += `
+        <div class="finalized-header">
+            <div class="finalized-header-left">
+                <i class="fa-solid fa-circle-check"></i>
+                <span class="finalized-header-title">Analysis Result</span>
+            </div>
+            <div class="finalized-header-chip">
+                <i class="fa-solid fa-check"></i> Completed
+            </div>
+        </div>`;
+
+    // ── Metrics strip (only record count) ──
+    if (recordCount !== null) {
+        html += `
+        <div class="finalized-metrics-strip">
+            <div class="finalized-metric-item">
+                <div class="finalized-label">Records Found</div>
+                <div class="finalized-value">${escapeHTML(String(recordCount))}</div>
+            </div>
+        </div>`;
+    }
+
+    // ── Body ──
+    html += `<div class="finalized-body">`;
+
+    // AI Response box
+    if (aiResponse) {
+        const responseText = typeof aiResponse === 'object' && aiResponse.text ? aiResponse.text : String(aiResponse);
+        html += `
+            <div>
+                <div class="section-label"><i class="fa-solid fa-robot" style="color:var(--accent);"></i> AI Response</div>
+                <div class="ai-response-box">${escapeHTML(responseText)}</div>
+            </div>`;
+    }
+
+    // ── Dynamic sections ──
+    const skipKeys = new Set(['query', 'question count', 'response text', 'response_text', 'result row count', 'result_row_count', 'json_output', 'sub questions', 'sub_questions']);
+
     for (const key in json) {
-        // Skip keys already shown in the metrics or technical keys
         const lowKey = key.toLowerCase();
-        if (['query', 'response_text', 'question_count', 'result_row_count', 'json_output'].includes(lowKey)) continue;
+        if (skipKeys.has(lowKey)) continue;
 
         const val = json[key];
         if (val === null || val === undefined || val === '-') continue;
 
+        // SQL Queries — expandable accordion
         if (lowKey === 'sql queries' || lowKey === 'sql_queries') {
+            const uid = 'sql-' + Math.random().toString(36).slice(2, 7);
             html += `
-                <div class="finalized-table-section sql-accordion">
-                    <details>
-                        <summary class="finalized-label" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
-                            <span><i class="fa-solid fa-code" style="margin-right: 8px;"></i> ${key.toUpperCase().replace(/_/g, ' ')}</span>
-                            <i class="fa-solid fa-chevron-down"></i>
+            <div class="finalized-table-section">
+                <div class="sql-accordion-wrap">
+                    <details id="${uid}">
+                        <summary>
+                            <span class="sum-left"><i class="fa-solid fa-code"></i> SQL Query</span>
+                            <i class="fa-solid fa-chevron-down sum-chevron"></i>
                         </summary>
                         <pre>${escapeHTML(String(val))}</pre>
                     </details>
                 </div>
-            `;
+            </div>`;
             continue;
         }
 
+        // Tables
         const flat = flattenKognitosTable(val);
-        
-        // If it's a table (list of objects)
         if (Array.isArray(flat) && flat.length > 0 && typeof flat[0] === 'object' && flat[0] !== null) {
+            const rowCount = flat.length;
             html += `
-                <div class="finalized-table-section">
-                    <div class="finalized-label" style="margin-top: 24px; margin-bottom: 12px;">${key.toUpperCase().replace(/_/g, ' ')}</div>
-                    <div class="query-result-section">
-                        <div class="query-result-table-wrapper">
-                            ${formatTableHTML(flat)}
-                        </div>
+            <div class="finalized-table-section">
+                <div class="section-label"><i class="fa-solid fa-table" style="color:var(--accent);"></i> ${key.replace(/_/g, ' ')}</div>
+                <div class="table-wrap">
+                    <div class="table-scroll">${formatTableHTML(flat)}</div>
+                    <div class="table-footer">
+                        <span>Showing all results</span>
+                        <span class="row-count-badge">${rowCount} row${rowCount !== 1 ? 's' : ''}</span>
                     </div>
                 </div>
-            `;
+            </div>`;
         } else {
-            // If it's a single value or short list not already in metrics
+            // Single value
             html += `
-                <div class="finalized-table-section" style="margin-top: 15px;">
-                    <div class="finalized-label">${key.toUpperCase().replace(/_/g, ' ')}</div>
-                    <div class="finalized-value" style="margin-top: 5px; font-weight: 500;">${escapeHTML(String(val))}</div>
-                </div>
-            `;
+            <div class="finalized-table-section">
+                <div class="section-label">${key.replace(/_/g, ' ')}</div>
+                <div class="ai-response-box" style="font-weight:600;">${escapeHTML(String(val))}</div>
+            </div>`;
         }
     }
 
-    html += `</div>`;
+    html += `</div></div>`;
     return html;
 }
 
