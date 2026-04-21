@@ -304,8 +304,6 @@ function formatResultUI(data) {
 
 function renderFinalizedDetails(json) {
     const metrics = [
-        { key: 'Query', label: 'USER QUERY', span: 2 },
-        { key: 'Question count', label: 'QUESTION COUNT', span: 1 },
         { key: 'Response text', label: 'AI RESPONSE', span: 2 },
         { key: 'Result row count', label: 'RECORDS FOUND', span: 1 }
     ];
@@ -339,9 +337,24 @@ function renderFinalizedDetails(json) {
         // Skip keys already shown in the metrics or technical keys
         const lowKey = key.toLowerCase();
         if (['query', 'response_text', 'question_count', 'result_row_count', 'json_output'].includes(lowKey)) continue;
-        
+
         const val = json[key];
         if (val === null || val === undefined || val === '-') continue;
+
+        if (lowKey === 'sql queries' || lowKey === 'sql_queries') {
+            html += `
+                <div class="finalized-table-section sql-accordion">
+                    <details>
+                        <summary class="finalized-label" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+                            <span><i class="fa-solid fa-code" style="margin-right: 8px;"></i> ${key.toUpperCase().replace(/_/g, ' ')}</span>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </summary>
+                        <pre>${escapeHTML(String(val))}</pre>
+                    </details>
+                </div>
+            `;
+            continue;
+        }
 
         const flat = flattenKognitosTable(val);
         
