@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kognitos AI Assistant – System Architecture & Documentation</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+        :root {
+            --accent: #4f46e5;
+            --accent-light: #818cf8;
+            --green: #10b981;
+            --bg: #ffffff;
+            --surface: #f8fafc;
+            --border: #e2e8f0;
+            --text: #0f172a;
+            --muted: #64748b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--text);
+            background: var(--bg);
+            font-size: 14px;
+            line-height: 1.7;
+            padding: 40px;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        /* ─── Cover Page ─────────────────────── */
+        .cover {
+            min-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            border-bottom: 3px solid var(--accent);
+            padding-bottom: 60px;
+            margin-bottom: 60px;
+        }
+        .cover-badge {
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            padding: 6px 16px;
+            border-radius: 20px;
+            margin-bottom: 32px;
+        }
+        .cover h1 {
+            font-size: 42px;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 16px;
+            color: var(--text);
+        }
+        .cover h1 span { color: var(--accent); }
+        .cover p {
+            font-size: 16px;
+            color: var(--muted);
+            max-width: 560px;
+        }
+        .cover-meta {
+            margin-top: 48px;
+            display: flex;
+            gap: 48px;
+        }
+        .cover-meta-item { text-align: center; }
+        .cover-meta-item .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+        .cover-meta-item .val { font-size: 16px; font-weight: 600; color: var(--accent); margin-top: 4px; }
+
+        /* ─── Section Headers ─────────────────── */
+        .section { margin-bottom: 52px; }
+        h2 {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text);
+            border-left: 4px solid var(--accent);
+            padding-left: 14px;
+            margin-bottom: 20px;
+            margin-top: 48px;
+        }
+        h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 10px;
+            margin-top: 24px;
+        }
+        p { margin-bottom: 12px; color: #334155; }
+
+        /* ─── Architecture Diagram ─────────────── */
+        .arch-diagram {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            margin: 24px 0;
+            overflow: hidden;
+        }
+        .diagram-title {
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        .arch-layers {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .arch-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .arch-box {
+            flex: 1;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 18px;
+            background: white;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        .arch-box.accent { border-color: var(--accent); background: #eef2ff; }
+        .arch-box.green  { border-color: var(--green);  background: #ecfdf5; }
+        .arch-box.purple { border-color: var(--accent-light); background: #f5f3ff; }
+        .arch-box .box-title { font-weight: 600; font-size: 13px; margin-bottom: 3px; }
+        .arch-box .box-sub   { font-size: 11px; color: var(--muted); }
+        .arrow {
+            width: 40px;
+            text-align: center;
+            font-size: 20px;
+            color: var(--muted);
+            flex-shrink: 0;
+        }
+        .arrow.down {
+            width: 100%;
+            text-align: center;
+            font-size: 14px;
+            color: var(--accent);
+            padding: 4px 0;
+        }
+
+        /* ─── Sequence Flow ─────────────────────── */
+        .flow-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            margin: 24px 0;
+        }
+        .flow-step {
+            display: flex;
+            gap: 20px;
+            position: relative;
+        }
+        .flow-step:not(:last-child)::before {
+            content: '';
+            position: absolute;
+            left: 19px;
+            top: 48px;
+            bottom: 0;
+            width: 2px;
+            background: var(--border);
+        }
+        .step-num {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: white;
+            font-weight: 700;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 1;
+        }
+        .step-num.green  { background: var(--green); }
+        .step-num.purple { background: var(--accent-light); }
+        .step-body { padding-bottom: 28px; }
+        .step-body strong { display: block; font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .step-body span  { color: var(--muted); font-size: 13px; }
+
+        /* ─── API Table ──────────────────────────── */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 13px;
+        }
+        th {
+            background: var(--accent);
+            color: white;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+        }
+        td {
+            padding: 11px 16px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+        tr:nth-child(even) td { background: var(--surface); }
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            background: #f1f5f9;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 2px 7px;
+            font-size: 12px;
+            color: var(--accent);
+        }
+
+        /* ─── File Card ──────────────────────────── */
+        .file-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+        .file-card {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px;
+            background: white;
+        }
+        .file-card .name {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 6px;
+        }
+        .file-card .role { font-size: 12px; color: var(--muted); }
+
+        /* ─── Alert Box ──────────────────────────── */
+        .alert {
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin: 20px 0;
+            border-left: 4px solid;
+        }
+        .alert.info    { background: #eff6ff; border-color: #3b82f6; }
+        .alert.warning { background: #fffbeb; border-color: #f59e0b; }
+        .alert.success { background: #ecfdf5; border-color: var(--green); }
+        .alert-title   { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .alert p       { font-size: 13px; margin: 0; }
+
+        /* ─── Footer ─────────────────────────────── */
+        .footer {
+            margin-top: 80px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        /* ─── Print ──────────────────────────────── */
+        @media print {
+            body { padding: 20px; }
+            .cover { min-height: auto; page-break-after: always; }
+            h2 { page-break-before: auto; }
+            .flow-steps, .arch-diagram { page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════ COVER ═══════════ -->
+<div class="cover">
+    <div class="cover-badge">Technical Documentation v1.0</div>
+    <h1>Kognitos AI <span>Assistant</span><br>System Architecture</h1>
+    <p>A full technical breakdown of system design, data flow, security architecture, and API reference for the Kognitos Chatbot Interface.</p>
+    <div class="cover-meta">
+        <div class="cover-meta-item">
+            <div class="label">Stack</div>
+            <div class="val">Node.js + Vanilla JS</div>
+        </div>
+        <div class="cover-meta-item">
+            <div class="label">Deployment</div>
+            <div class="val">Vercel Serverless</div>
+        </div>
+        <div class="cover-meta-item">
+            <div class="label">AI Engine</div>
+            <div class="val">Kognitos Cloud</div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════ 1. SYSTEM OVERVIEW ═══════════ -->
+<h2>1. System Overview</h2>
+<p>The Kognitos AI Assistant is a full-stack automation interface that allows users to query complex enterprise data using plain natural language. The system connects a premium Chat UI to the Kognitos Automation Engine through a secure, serverless proxy layer.</p>
+
+<div class="arch-diagram">
+    <div class="diagram-title">High-Level Architecture</div>
+    <div class="arch-layers">
+        <div class="arch-row">
+            <div class="arch-box accent">
+                <div class="box-title">👤 User (Browser)</div>
+                <div class="box-sub">Types natural language query → Premium Chat UI in browser</div>
+            </div>
+        </div>
+        <div class="arrow down">↓ HTTP Request (No credentials exposed)</div>
+        <div class="arch-row">
+            <div class="arch-box purple">
+                <div class="box-title">🔒 Vercel Backend Proxy</div>
+                <div class="box-sub">api/index.js &nbsp;|&nbsp; Injects API_TOKEN from environment &nbsp;|&nbsp; Formats Kognitos payload</div>
+            </div>
+        </div>
+        <div class="arrow down">↓ Authenticated HTTPS to Kognitos Cloud</div>
+        <div class="arch-row">
+            <div class="arch-box green">
+                <div class="box-title">🧠 Kognitos Engine</div>
+                <div class="box-sub">app.us-1.kognitos.com &nbsp;|&nbsp; Runs SOP Automation &nbsp;|&nbsp; Fetches cross-database data</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════ 2. PROJECT STRUCTURE ═══════════ -->
+<h2>2. Project File Structure</h2>
+<div class="file-grid">
+    <div class="file-card">
+        <div class="name">public/index.html</div>
+        <div class="role">The main HTML shell. Contains the chat layout, sidebar, welcome screen, and quick-prompt cards.</div>
+    </div>
+    <div class="file-card">
+        <div class="name">public/style.css</div>
+        <div class="role">All visual design: dark/light theme variables, pipeline tracker styles, result card layouts, and animations.</div>
+    </div>
+    <div class="file-card">
+        <div class="name">public/app.js</div>
+        <div class="role">Core frontend logic: event handling, API polling, real-time activity tracker, and the complete result-rendering engine.</div>
+    </div>
+    <div class="file-card">
+        <div class="name">api/index.js</div>
+        <div class="role">Vercel Serverless Function. Acts as the secure proxy between the browser and the Kognitos API.</div>
+    </div>
+    <div class="file-card">
+        <div class="name">server.js</div>
+        <div class="role">Legacy local development server. Serves static files and proxies API requests when running locally with node server.js.</div>
+    </div>
+    <div class="file-card">
+        <div class="name">vercel.json</div>
+        <div class="role">Vercel configuration. Defines routing rules: API paths → serverless function, everything else → static public files.</div>
+    </div>
+    <div class="file-card">
+        <div class="name">.env</div>
+        <div class="role"><strong>NEVER commit this file.</strong> Contains secret credentials: ORGANIZATION_ID, WORKSPACE_ID, AUTOMATION_ID, API_TOKEN.</div>
+    </div>
+    <div class="file-card">
+        <div class="name">.gitignore</div>
+        <div class="role">Ensures .env, node_modules, and log files are excluded from GitHub version control.</div>
+    </div>
+</div>
+
+<!-- ═══════════ 3. REQUEST LIFECYCLE ═══════════ -->
+<h2>3. Request Lifecycle: Step-by-Step</h2>
+<p>The following is the exact sequence of events that occurs every time a user enters a query and presses Enter.</p>
+
+<div class="flow-steps">
+    <div class="flow-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+            <strong>User Input → handleSend()</strong>
+            <span>You type "share the list of unregistered clients" and hit Enter. The <code>handleSend()</code> function in <code>app.js</code> fires. The UI immediately shows a thinking indicator and the "AI Execution Pipeline" tracker opens.</span>
+        </div>
+    </div>
+    <div class="flow-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+            <strong>Frontend → Proxy: POST /api/invoke</strong>
+            <span>The browser sends a simple JSON payload to your own backend. No Kognitos credentials are in this request — they live safely on the server side only.</span>
+        </div>
+    </div>
+    <div class="flow-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+            <strong>Proxy → Kognitos: Authenticated Invocation</strong>
+            <span>The backend (<code>api/index.js</code>) restructures the query into Kognitos' exact required format, attaches your <code>Authorization: Bearer API_TOKEN</code> header, and forwards it securely to <code>app.us-1.kognitos.com</code>.</span>
+        </div>
+    </div>
+    <div class="flow-step">
+        <div class="step-num green">4</div>
+        <div class="step-body">
+            <strong>Kognitos Responds with Run ID</strong>
+            <span>Kognitos confirms it has received the job and begins execution. It immediately returns a unique <strong>Run ID</strong> (e.g., <code>xyz123</code>). This ID is sent back to the browser.</span>
+        </div>
+    </div>
+    <div class="flow-step">
+        <div class="step-num green">5</div>
+        <div class="step-body">
+            <strong>Real-Time Event Streaming: /api/runs/xyz123/events</strong>
+            <span>Using the Run ID, the frontend starts a polling loop against the <code>/events</code> endpoint. As Kognitos runs its SOP, it logs execution steps (intent classification, DB fetch, field mapping). The frontend reads each log and updates the "AI Execution Pipeline" progress bar and terminal display in real-time.</span>
+        </div>
+    </div>
+    <div class="flow-step">
+        <div class="step-num purple">6</div>
+        <div class="step-body">
+            <strong>Status Polling: /api/runs/xyz123 (every 2 seconds)</strong>
+            <span>Simultaneously, the frontend polls the run status endpoint every 2 seconds. This is lighter-weight and returns either "running" or "completed."</span>
+        </div>
+    </div>
+    <div class="flow-step">
+        <div class="step-num purple">7</div>
+        <div class="step-body">
+            <strong>Completion Detected → Data Extraction</strong>
+            <span>When the status returns "completed," the response includes the full <code>outputs</code> object from Kognitos. This contains all the raw data (tables, metrics, response text) exactly as Kognitos produced it.</span>
+        </div>
+    </div>
+    <div class="flow-step">
+        <div class="step-num">8</div>
+        <div class="step-body">
+            <strong>Data Processing: flattenKognitosTable()</strong>
+            <span>Because Kognitos returns deeply nested JSON (lists within dictionaries within lists), the <code>flattenKognitosTable()</code> function recursively unwraps all nesting into a clean, flat 2D array — rows and columns ready for rendering.</span>
+        </div>
+    </div>
+    <div class="flow-step">
+        <div class="step-num">9</div>
+        <div class="step-body">
+            <strong>Premium UI Rendering</strong>
+            <span>The "AI Execution Pipeline" tracker collapses, turns green and shows "Pipeline Success." The final data is rendered as a premium, fully scrollable HTML table with metric cards above it. Every single row and field from Kognitos is displayed — nothing is filtered or distincted by the frontend.</span>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════ 4. API REFERENCE ═══════════ -->
+<h2>4. API Endpoint Reference</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Endpoint</th>
+            <th>Method</th>
+            <th>Purpose</th>
+            <th>Kognitos Target</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><code>/api/invoke</code></td>
+            <td><code>POST</code></td>
+            <td>Triggers the Kognitos Automation SOP. Accepts the user's natural language query and returns a Run ID.</td>
+            <td><code>.../automations/:id:invoke</code></td>
+        </tr>
+        <tr>
+            <td><code>/api/runs/:id</code></td>
+            <td><code>GET</code></td>
+            <td>Polls the current execution status. Returns "running" or "completed" along with final outputs on success.</td>
+            <td><code>.../runs/:runId</code></td>
+        </tr>
+        <tr>
+            <td><code>/api/runs/:id/events</code></td>
+            <td><code>GET</code></td>
+            <td>Streams real-time execution journal logs. Used to power the live "AI Execution Pipeline" tracker in the UI.</td>
+            <td><code>.../runs/:runId/events</code></td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- ═══════════ 5. SECURITY ═══════════ -->
+<h2>5. Security Architecture</h2>
+<p>Protecting your Kognitos <code>API_TOKEN</code> is critical. Placing it in frontend JavaScript would expose it to anyone who opens the browser's "Inspect Element" panel.</p>
+
+<div class="alert warning">
+    <div class="alert-title">⚠️ Never Put Credentials in Frontend Code</div>
+    <p>If <code>API_TOKEN</code> is placed in <code>public/app.js</code> or <code>index.html</code>, any visitor to your site can view it, steal it, and make unlimited API calls at your expense.</p>
+</div>
+
+<div class="alert success">
+    <div class="alert-title">✅ How This Application Is Protected</div>
+    <p>All credentials (API_TOKEN, ORGANIZATION_ID, etc.) are stored <strong>server-side only</strong> as environment variables in Vercel. The browser never sees them. The browser only calls <code>/api/invoke</code>, which is your own proxy, which then attaches the key on the backend before forwarding to Kognitos.</p>
+</div>
+
+<h3>Environment Variables Reference</h3>
+<table>
+    <thead>
+        <tr><th>Variable</th><th>Where It's Used</th><th>Where to Set for Production</th></tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><code>API_TOKEN</code></td>
+            <td>Injected as Bearer token in all Kognitos requests.</td>
+            <td>Vercel Dashboard → Settings → Environment Variables</td>
+        </tr>
+        <tr>
+            <td><code>ORGANIZATION_ID</code></td>
+            <td>Identifies your Kognitos organization.</td>
+            <td>Vercel Dashboard → Settings → Environment Variables</td>
+        </tr>
+        <tr>
+            <td><code>WORKSPACE_ID</code></td>
+            <td>Identifies the specific Kognitos Workspace.</td>
+            <td>Vercel Dashboard → Settings → Environment Variables</td>
+        </tr>
+        <tr>
+            <td><code>AUTOMATION_ID</code></td>
+            <td>Points to the specific published SOP Automation.</td>
+            <td>Vercel Dashboard → Settings → Environment Variables</td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- ═══════════ 6. DEPLOYMENT ═══════════ -->
+<h2>6. Deployment & CI/CD Workflow</h2>
+<p>The project uses a zero-friction, automated deployment pipeline via GitHub and Vercel.</p>
+
+<div class="flow-steps">
+    <div class="flow-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+            <strong>Local Development</strong>
+            <span>Make code changes. Run <code>node server.js</code> locally to test on <code>http://localhost:3000</code>.</span>
+        </div>
+    </div>
+    <div class="flow-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+            <strong>Git Push to GitHub</strong>
+            <span>Run <code>git add .</code> → <code>git commit -m "update"</code> → <code>git push</code>. Code is now updated on <code>github.com/Padmanaban-Dev/kognitos-chatbot</code>.</span>
+        </div>
+    </div>
+    <div class="flow-step">
+        <div class="step-num green">3</div>
+        <div class="step-body">
+            <strong>Vercel Auto-Deploy (~30 seconds)</strong>
+            <span>Vercel detects the new code on GitHub. It automatically builds and deploys the updated version. Your live URL is instantly updated with no manual action required.</span>
+        </div>
+    </div>
+</div>
+
+<div class="alert info">
+    <div class="alert-title">💡 Pro Tip: Using Vercel Preview Deployments</div>
+    <p>If you push to a new Git branch (e.g., <code>feature/new-table-style</code>), Vercel creates a separate temporary preview URL for it — allowing you to safely test a new feature without touching your main live site.</p>
+</div>
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<div class="footer">
+    <p><strong>Kognitos AI Assistant</strong> — Technical Documentation v1.0</p>
+    <p>Prepared for: Padmanaban &nbsp;|&nbsp; Confidential &nbsp;|&nbsp; April 2026</p>
+</div>
+
+</body>
+</html>
