@@ -15,6 +15,7 @@ let currentChatId = null;
 let isRunning = false;
 let currentBotMsgEl = null;
 let pendingDeleteId = null;
+const tableRegistry = {}; // stores flat table data by id for fullscreen modal
 
 init();
 
@@ -382,19 +383,35 @@ function renderFinalizedDetails(json) {
             continue;
         }
 
-        // Tables
+        // Tables — collapsible accordion with fullscreen expand
         const flat = flattenKognitosTable(val);
         if (Array.isArray(flat) && flat.length > 0 && typeof flat[0] === 'object' && flat[0] !== null) {
             const rowCount = flat.length;
+            const tid = 'tbl-' + Math.random().toString(36).slice(2, 7);
+            tableRegistry[tid] = { title: key.replace(/_/g, ' '), rows: flat };
             html += `
             <div class="finalized-table-section">
-                <div class="section-label"><i class="fa-solid fa-table" style="color:var(--accent);"></i> ${key.replace(/_/g, ' ')}</div>
-                <div class="table-wrap">
-                    <div class="table-scroll">${formatTableHTML(flat)}</div>
-                    <div class="table-footer">
-                        <span>Showing all results</span>
-                        <span class="row-count-badge">${rowCount} row${rowCount !== 1 ? 's' : ''}</span>
-                    </div>
+                <div class="sql-accordion-wrap">
+                    <details id="${tid}" open>
+                        <summary>
+                            <span class="sum-left">
+                                <i class="fa-solid fa-table"></i>
+                                ${key.replace(/_/g, ' ')}
+                                <span class="row-count-badge" style="margin-left:8px;">${rowCount} row${rowCount !== 1 ? 's' : ''}</span>
+                            </span>
+                            <span class="sum-right">
+                                <button class="tbl-expand-btn" title="Expand fullscreen" onclick="event.preventDefault();openTableModal('${tid}')">
+                                    <i class="fa-solid fa-expand"></i>
+                                </button>
+                                <i class="fa-solid fa-chevron-down sum-chevron"></i>
+                            </span>
+                        </summary>
+                        <div class="table-scroll">${formatTableHTML(flat)}</div>
+                        <div class="table-footer">
+                            <span>Showing all results</span>
+                            <span class="row-count-badge">${rowCount} row${rowCount !== 1 ? 's' : ''}</span>
+                        </div>
+                    </details>
                 </div>
             </div>`;
         } else {
@@ -648,4 +665,47 @@ function parseKognitosValue(val) {
 
 function escapeHTML(str) {
     return str.replace(/[&<>'"]/g, t => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[t]));
+}
+
+/* ────────────────────────────────────────
+   FULLSCREEN TABLE MODAL
+───────────────────────────────────────── */
+function openTableModal(tid) {
+    const entry = tableRegistry[tid];
+    if (!entry) return;
+
+    const modal = document.getElementById('table-modal');
+    const titleEl = document.getElementById('tbl-modal-title');
+    const countEl = document.getElementById('tbl-modal-count');
+    const bodyEl  = document.getElementById('tbl-modal-body');
+
+    titleEl.textContent = entry.title;
+    countEl.textContent = `${entry.rows.length} row${entry.rows.length !== 1 ? 's' : ''}`;
+    bodyEl.innerHTML    = formatTableHTML(entry.rows);
+
+    // Wire download button
+    document.getElementById('tbl-modal-download').onclick = () => downloadTableCSV(entry);
+
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeTableModal() {
+    document.getElementById('table-modal').classList.add('hidden');
+    document.body.style.overflow = '';
+}
+
+function downloadTableCSV(entry) {
+    if (!entry.rows.length) return;
+    const headers = Object.keys(entry.rows[0]);
+    const lines = [
+        headers.join(','),
+        ...entry.rows.map(r => headers.map(h => `"${String(r[h] || '').replace(/"/g, '""')}"`).join(','))
+    ];
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+    const a    = document.createElement('a');
+    a.href     = URL.createObjectURL(blob);
+    a.download = (entry.title || 'table').replace(/\s+/g, '_') + '.csv';
+    a.click();
+    URL.revokeObjectURL(a.href);
 }

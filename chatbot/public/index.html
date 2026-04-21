@@ -153,7 +153,29 @@
     </main>
 </div>
 
-<!-- Delete Modal -->
+<!-- Fullscreen Table Modal -->
+<div class="tbl-modal-overlay hidden" id="table-modal" onclick="if(event.target===this)closeTableModal()">
+    <div class="tbl-modal-panel">
+        <div class="tbl-modal-header">
+            <div class="tbl-modal-title-group">
+                <i class="fa-solid fa-table-cells" style="color:var(--accent);"></i>
+                <span id="tbl-modal-title">Table</span>
+                <span class="row-count-badge" id="tbl-modal-count"></span>
+            </div>
+            <div class="tbl-modal-actions">
+                <button id="tbl-modal-download" class="tbl-modal-btn" title="Download CSV">
+                    <i class="fa-solid fa-download"></i>
+                </button>
+                <button class="tbl-modal-btn" onclick="closeTableModal()" title="Close">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+        <div class="tbl-modal-body" id="tbl-modal-body"></div>
+    </div>
+</div>
+
+
 <div class="modal-overlay hidden" id="delete-modal">
     <div class="modal-container">
         <h3 class="modal-title">Delete conversation?</h3>
@@ -233,6 +255,12 @@
     const initialTheme = localStorage.getItem('kognitos_theme') || 'light';
     document.documentElement.setAttribute('data-theme', initialTheme);
     updateThemeUI(initialTheme);
+
+    /* ── Escape key closes fullscreen table modal ── */
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeTableModal();
+    });
+
 </script>
 </body>
 </html>
