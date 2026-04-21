@@ -1244,3 +1244,47 @@ textarea::-webkit-scrollbar-thumb { background: var(--border-strong); border-rad
     background: rgba(79,110,247,0.07);
     color: #e2e8f0;
 }
+
+/* ════════════════════════════════════════════
+   COMPLETION BANNER (background run finished)
+   ════════════════════════════════════════════ */
+.completion-banner {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-strong);
+    border-left: 3px solid var(--success);
+    border-radius: 12px;
+    padding: 12px 18px;
+    box-shadow: var(--shadow-lg);
+    z-index: 3000;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    animation: bannerSlide 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    max-width: 520px;
+    width: calc(100% - 48px);
+}
+@keyframes bannerSlide {
+    from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+    to   { transform: translateX(-50%) translateY(0);    opacity: 1; }
+}
+.completion-banner span { flex: 1; }
+.completion-banner button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--accent);
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background 0.15s;
+    font-family: 'Inter', sans-serif;
+}
+.completion-banner button:hover { background: var(--accent-light); }
+

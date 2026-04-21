@@ -12,16 +12,16 @@ const deleteConfirmBtn = document.getElementById('delete-confirm-btn');
 
 let conversations = JSON.parse(localStorage.getItem('kognitos_chats') || '[]');
 let currentChatId = null;
-let isRunning = false;
-let currentBotMsgEl = null;
 let pendingDeleteId = null;
-const tableRegistry = {}; // stores flat table data by id for fullscreen modal
+const tableRegistry = {};
+const activePolls = new Set(); // Tracks chat IDs that are currently polling
 
 init();
 
 function init() {
     renderHistory();
     initTheme();
+    resumeActivePolls(); // New: Resume polling for any 'running' chats found in history
     userInput.addEventListener('input', () => {
         userInput.style.height = 'auto';
         userInput.style.height = (userInput.scrollHeight) + 'px';
@@ -157,11 +157,11 @@ function loadChat(id) {
     currentChatId = id;
     chatHistory.innerHTML = '';
     welcomeScreen.classList.add('hidden');
-    chat.messages.forEach(msg => appendMessage(msg.role, msg.content));
+    chat.messages.forEach(msg => appendMessage(msg.role, msg.content, msg.type, msg.runId));
     renderHistory();
 }
 
-function saveMessage(role, content) {
+function saveMessage(role, content, type = 'normal', runId = null) {
     if (!currentChatId) {
         currentChatId = Date.now().toString();
         const title = typeof content === 'string' ? content.substring(0, 30) : 'AI Request';
@@ -169,20 +169,82 @@ function saveMessage(role, content) {
     }
     const chat = conversations.find(c => c.id === currentChatId);
     if (chat) {
-        chat.messages.push({ role, content });
+        // If we are saving a 'running' placeholder, remove any previous running placeholders for this chat
+        if (type === 'running') {
+            chat.messages = chat.messages.filter(m => m.type !== 'running');
+        }
+        
+        chat.messages.push({ role, content, type, runId, timestamp: Date.now() });
         chat.updatedAt = Date.now();
         localStorage.setItem('kognitos_chats', JSON.stringify(conversations));
         renderHistory();
     }
 }
 
+function updateMessageInHistory(chatId, role, type, newContent, newType = 'normal') {
+    const chat = conversations.find(c => c.id === chatId);
+    if (chat) {
+        const msg = chat.messages.find(m => m.role === role && m.type === type);
+        if (msg) {
+            msg.content = newContent;
+            msg.type = newType;
+            msg.updatedAt = Date.now();
+            localStorage.setItem('kognitos_chats', JSON.stringify(conversations));
+            renderHistory();
+        }
+    }
+}
+
+/* Save to a specific chat ID regardless of which chat is currently active.
+   Called when a background poll finishes after the user navigated away. */
+function saveMessageToChat(chatId, role, content) {
+    const chat = conversations.find(c => c.id === chatId);
+    if (chat) {
+        chat.messages.push({ role, content });
+        chat.updatedAt = Date.now();
+        localStorage.setItem('kognitos_chats', JSON.stringify(conversations));
+        renderHistory();  // refresh sidebar so the chat shows updated
+    }
+}
+
+/* Banner notification: fires when automation finishes but user is elsewhere. */
+function showCompletionBanner(chatId) {
+    const existing = document.getElementById('completion-banner');
+    if (existing) existing.remove();
+
+    const chat = conversations.find(c => c.id === chatId);
+    const label = chat ? chat.title : 'Previous query';
+
+    const banner = document.createElement('div');
+    banner.id = 'completion-banner';
+    banner.className = 'completion-banner';
+    banner.innerHTML = `
+        <i class="fa-solid fa-circle-check" style="color:var(--success);"></i>
+        <span><strong>Analysis complete:</strong> "${escapeHTML(label.substring(0,40))}"</span>
+        <button onclick="loadChat('${chatId}');this.closest('.completion-banner').remove()">View →</button>
+        <button onclick="this.closest('.completion-banner').remove()" style="opacity:0.5;">✕</button>
+    `;
+    document.body.appendChild(banner);
+
+    // Auto-dismiss after 8 seconds
+    setTimeout(() => { if (banner.isConnected) banner.remove(); }, 8000);
+}
+
+
+
 function setPrompt(text) {
     userInput.value = text;
     userInput.dispatchEvent(new Event('input'));
 }
 
-function appendMessage(role, content) {
+function appendMessage(role, content, type = 'normal', runId = null) {
     if (welcomeScreen) welcomeScreen.classList.add('hidden');
+    
+    // If it's a running state, use the specialized tracker template
+    if (type === 'running') {
+        return createBotMessageWithTracker(currentChatId, runId);
+    }
+
     const outer = document.createElement('div');
     outer.className = `message-outer ${role}`;
     outer.innerHTML = `
@@ -196,10 +258,15 @@ function appendMessage(role, content) {
     return outer;
 }
 
-function createBotMessageWithTracker() {
+function createBotMessageWithTracker(chatId, runId) {
     if (welcomeScreen) welcomeScreen.classList.add('hidden');
     const outer = document.createElement('div');
     outer.className = `message-outer bot`;
+    // These data attributes allow pollRun to find this element even after a chat switch
+    outer.dataset.chatId = chatId;
+    outer.dataset.runId  = runId;
+    outer.dataset.status = 'running';
+
     outer.innerHTML = `
         <div class="message-inner">
             <div class="avatar"><i class="fa-solid fa-robot"></i></div>
@@ -228,23 +295,28 @@ function createBotMessageWithTracker() {
     return outer;
 }
 
-function logActivity(botEl, text, status = 'active') {
+function logActivity(chatId, text, status = 'active') {
+    // Find the element currently in the DOM for this chat (if any)
+    const botEl = document.querySelector(`.message-outer[data-chat-id="${chatId}"][data-status="running"]`);
+    if (!botEl) return;
+
     const body = botEl.querySelector('.activity-body');
+    if (!body) return;
+    
+    // Check if this text was already logged (prevent duplicates on resume)
+    const existing = Array.from(body.querySelectorAll('.pipeline-text')).some(span => span.textContent.includes(text));
+    if (existing && status !== 'active') return;
+
     const line = document.createElement('div');
     line.className = `activity-line ${status}`;
     
-    // Create timestamp
     const now = new Date();
     const time = now.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    
-    // Node ID (mocked for "realness")
     const nodeID = 'N-' + Math.floor(Math.random() * 9000 + 1000);
     
-    // Map technical steps to the user's specific terminology
     let display = text;
     if (text.includes('Processing')) {
-        const step = text.replace('Processing ', '');
-        display = `Dynamically classifying ${step}`;
+        display = `Dynamically classifying ${text.replace('Processing ', '')}`;
     } else if (text.includes('data point')) {
         display = `Metadata Extracted: Intent Mapping Successful`;
     }
@@ -257,7 +329,6 @@ function logActivity(botEl, text, status = 'active') {
     body.appendChild(line);
     body.scrollTop = body.scrollHeight;
     
-    // Update progress bar
     const bar = botEl.querySelector('#p-bar');
     if (bar) {
         const count = body.children.length;
@@ -269,6 +340,25 @@ function logActivity(botEl, text, status = 'active') {
 function formatResultUI(data) {
     if (!data) return "";
     let parsed = parseKognitosValue(data);
+
+    // Handle the persistent 'running' state object
+    if (parsed && typeof parsed === 'object' && parsed.status === 'running') {
+        return `
+            <div class="typing-area">Analyzing your request...</div>
+            <div class="activity-tracker">
+                <div class="activity-header">
+                    <div class="header-left">
+                        <i class="fa-solid fa-microchip fa-spin" style="color:var(--accent)"></i>
+                        <span class="pipeline-style">AI Execution Pipeline</span>
+                    </div>
+                </div>
+                <div class="pipeline-progress-container"><div class="pipeline-progress-bar" style="width:10%"></div></div>
+                <div class="activity-body"></div>
+            </div>
+            <div class="final-result-area"></div>
+            <div class="source-section"></div>
+        `;
+    }
     
     // If it's a string, it might be a JSON string from a Kognitos text field
     if (typeof parsed === 'string' && (parsed.trim().startsWith('{') || parsed.trim().startsWith('['))) {
@@ -449,41 +539,59 @@ function flattenKognitosTable(data) {
 
 async function handleSend() {
     const text = userInput.value.trim();
-    if (!text || isRunning) return;
+    if (!text) return;
+    
+    // Prevent double-sending for a single chat
+    if (activePolls.has(currentChatId)) return;
 
     appendMessage('user', text);
     saveMessage('user', text);
+
+    const runChatId = currentChatId;
     userInput.value = '';
     userInput.style.height = 'auto';
     sendBtn.disabled = true;
-    isRunning = true;
 
-    currentBotMsgEl = createBotMessageWithTracker();
-    
     try {
         const invokeRes = await fetch('/api/invoke', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: text }) });
         const invokeData = await invokeRes.json();
-        const runId = (invokeData.run_id || invokeData.name).split('/').pop();
-        await pollRun(runId, currentBotMsgEl);
+        
+        let runId;
+        if (invokeData.run_id) runId = invokeData.run_id.split('/').pop();
+        else if (invokeData.name) runId = invokeData.name.split('/').pop();
+        else throw new Error("Failed to start automation");
+
+        // Save a placeholder message in history so switching back shows 'Analyzing'
+        saveMessage('bot', { status: 'running', runId }, 'running', runId);
+        
+        // Render it if we are still on this chat
+        if (currentChatId === runChatId) {
+            appendMessage('bot', null, 'running', runId);
+        }
+
+        await pollRun(runId, runChatId);
     } catch (err) {
-        const area = currentBotMsgEl.querySelector('.final-result-area');
-        area.innerHTML = `<p style="color:red">Error: ${err.message}</p>`;
-        if (currentBotMsgEl.querySelector('.typing-area')) currentBotMsgEl.querySelector('.typing-area').remove();
-        isRunning = false;
+        // Find if we have a visible area to show error
+        const area = document.querySelector(`.message-outer[data-chat-id="${runChatId}"] .final-result-area`);
+        if (area) area.innerHTML = `<p style="color:red">Error: ${err.message}</p>`;
+        activePolls.delete(runChatId);
+        sendBtn.disabled = !userInput.value.trim();
     }
 }
 
-async function pollRun(runId, botEl) {
+async function pollRun(runId, runChatId) {
+    if (activePolls.has(runChatId)) return;
+    activePolls.add(runChatId);
+
     let completed = false;
     let lastExtraction = null;
     let pageToken = '';
-    const finalArea = botEl.querySelector('.final-result-area');
-    const sourceArea = botEl.querySelector('.source-section');
-    const typing = botEl.querySelector('.typing-area');
-    const tracker = botEl.querySelector('.activity-tracker');
 
     while (!completed) {
         try {
+            // Check if user is on this chat right now
+            const botEl = document.querySelector(`.message-outer[data-chat-id="${runChatId}"][data-status="running"]`);
+
             const eventsRes = await fetch(`/api/runs/${runId}/events${pageToken ? '?page_token=' + encodeURIComponent(pageToken) : ''}`);
             if (eventsRes.ok) {
                 const data = await eventsRes.json();
@@ -496,8 +604,12 @@ async function pollRun(runId, botEl) {
                         if (node.book_function_call) {
                             const raw = node.book_function_call.book_function?.function_name || 'step';
                             const clean = raw.replace(/x[0-9A-Fa-f]{2}/g, '').replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
-                            if (typing) typing.textContent = `Running ${clean}...`;
-                            logActivity(botEl, `Processing ${clean}`);
+                            
+                            if (botEl) {
+                                const typing = botEl.querySelector('.typing-area');
+                                if (typing) typing.textContent = `Running ${clean}...`;
+                            }
+                            logActivity(runChatId, `Processing ${clean}`);
                         }
                         
                         const outputs = node.outputs;
@@ -508,7 +620,7 @@ async function pollRun(runId, botEl) {
                                 const parsed = parseKognitosValue(outputs[k]);
                                 if (parsed && (Array.isArray(parsed) || k === 'answer')) {
                                     lastExtraction = outputs[k];
-                                    logActivity(botEl, `Collected new data point`, 'done');
+                                    logActivity(runChatId, `Collected new data point`, 'done');
                                 }
                             }
                         }
@@ -522,35 +634,40 @@ async function pollRun(runId, botEl) {
                 const run = await runRes.json();
                 if (run.state && (run.state.completed || run.state.failed)) {
                     completed = true;
-                    if (typing) typing.remove();
-                    tracker.classList.add('collapsed');
-                    const neuroHeader = tracker.querySelector('.pipeline-style');
-                    if (neuroHeader) {
-                        neuroHeader.textContent = 'Pipeline Success';
-                        tracker.querySelector('.header-left i').className = 'fa-solid fa-circle-check';
-                        tracker.querySelector('.header-left i').style.color = '#10b981';
+                    
+                    if (botEl) {
+                        const typing = botEl.querySelector('.typing-area');
+                        if (typing) typing.remove();
+                        const tracker = botEl.querySelector('.activity-tracker');
+                        if (tracker) {
+                            tracker.classList.add('collapsed');
+                            const neuroHeader = tracker.querySelector('.pipeline-style');
+                            if (neuroHeader) neuroHeader.textContent = 'Pipeline Success';
+                            const icon = tracker.querySelector('.header-left i');
+                            if (icon) {
+                                icon.className = 'fa-solid fa-circle-check';
+                                icon.style.color = '#10b981';
+                            }
+                            const bar = tracker.querySelector('#p-bar');
+                            if (bar) bar.style.width = '100%';
+                        }
                     }
-                    if (tracker.querySelector('#p-bar')) tracker.querySelector('#p-bar').style.width = '100%';
 
                     if (run.state.completed) {
                         const outputs = run.state.completed.outputs;
                         let outcomeContent = "";
                         let savedContent = "";
                         
-                        // Check for the specific finalized JSON output first (user requirement)
                         if (outputs.json_output) {
                             outcomeContent = formatResultUI(outputs.json_output);
                             savedContent = outputs.json_output;
                         } else {
-                            // If json_output is missing, scan all outputs for the finalized structure
                             for (const k in outputs) {
                                 const val = parseKognitosValue(outputs[k]);
-                                // Try to see if this output item is a JSON string or object matching our structure
                                 let testObj = val;
                                 if (typeof testObj === 'string' && testObj.trim().startsWith('{')) {
                                     try { testObj = JSON.parse(testObj); } catch(e) {}
                                 }
-                                
                                 if (testObj && typeof testObj === 'object' && (testObj.query || testObj.Query || testObj.response_text)) {
                                     outcomeContent = formatResultUI(testObj);
                                     savedContent = testObj;
@@ -568,11 +685,8 @@ async function pollRun(runId, botEl) {
                                     metrics.push({ label: k.replace(/_/g, ' '), value: val });
                                 }
                             }
-                            
                             if (metrics.length > 0) {
-                                metricsHtml = `<div class="metrics-grid">` + 
-                                    metrics.map(m => `<div class="metric-pill"><span class="m-val">${m.value}</span><span class="m-lab">${m.label}</span></div>`).join('') +
-                                    `</div>`;
+                                metricsHtml = `<div class="metrics-grid">` + metrics.map(m => `<div class="metric-pill"><span class="m-val">${m.value}</span><span class="m-lab">${m.label}</span></div>`).join('') + `</div>`;
                             }
 
                             let primaryText = "";
@@ -585,49 +699,67 @@ async function pollRun(runId, botEl) {
                                 savedContent = txt;
                             }
 
-                            if (primaryText) {
-                                outcomeContent = metricsHtml + primaryText;
-                            } else if (lastExtraction) {
+                            if (primaryText) outcomeContent = metricsHtml + primaryText;
+                            else if (lastExtraction) {
                                 const tableHtml = formatTableHTML(lastExtraction);
-                                outcomeContent = metricsHtml + `
-                                    <div class="query-result-section">
-                                        <div class="query-result-header"><i class="fa-solid fa-database"></i> Query Result</div>
-                                        <div class="query-result-table-wrapper">${tableHtml}</div>
-                                    </div>
-                                `;
+                                outcomeContent = metricsHtml + `<div class="query-result-section"><div class="query-result-header"><i class="fa-solid fa-database"></i> Query Result</div><div class="query-result-table-wrapper">${tableHtml}</div></div>`;
                                 if (!savedContent) savedContent = lastExtraction;
                             }
                         }
 
-                        if (!outcomeContent) {
-                            outcomeContent = `<div class="result-card"><div class="result-body">AI processed your request but returned no specific data.</div></div>`;
+                        if (!outcomeContent) outcomeContent = `<div class="result-card"><div class="result-body">AI processed your request but returned no specific data.</div></div>`;
+
+                        if (botEl) {
+                            const finalArea = botEl.querySelector('.final-result-area');
+                            if (finalArea) finalArea.innerHTML = outcomeContent;
+                            botEl.dataset.status = 'done';
+
+                            // Technical View
+                            const showTechnical = outputs.json_output || lastExtraction;
+                            if (showTechnical) {
+                                const sourceArea = botEl.querySelector('.source-section');
+                                if (sourceArea) {
+                                    const rawId = `raw-${Date.now()}`;
+                                    sourceArea.innerHTML = `
+                                        <button class="source-btn" onclick="document.getElementById('${rawId}').classList.toggle('show')">
+                                            <i class="fa-solid fa-code"></i> Toggle Technical View
+                                        </button>
+                                        <div id="${rawId}" class="source-content">
+                                            <pre style="padding:15px; font-size: 0.8rem; overflow-x:auto;">${escapeHTML(JSON.stringify(parseKognitosValue(showTechnical), null, 2))}</pre>
+                                        </div>
+                                    `;
+                                }
+                            }
                         }
 
-                        finalArea.innerHTML = outcomeContent;
-                        saveMessage('bot', savedContent);
+                        // Sync to history: replace the placeholder with real result
+                        updateMessageInHistory(runChatId, 'bot', 'running', savedContent, 'normal');
 
-                        // Technical View
-                        const showTechnical = json['json_output'] || lastExtraction;
-                        if (showTechnical) {
-                            const rawId = `raw-${Date.now()}`;
-                            sourceArea.innerHTML = `
-                                <button class="source-btn" onclick="document.getElementById('${rawId}').classList.toggle('show')">
-                                    <i class="fa-solid fa-code"></i> Toggle Technical View
-                                </button>
-                                <div id="${rawId}" class="source-content">
-                                    <pre style="padding:15px; font-size: 0.8rem; overflow-x:auto;">${escapeHTML(JSON.stringify(parseKognitosValue(showTechnical), null, 2))}</pre>
-                                </div>
-                            `;
-                        }
-                    } else { finalArea.innerHTML = `<p>AI processing failed.</p>`; }
+                        if (currentChatId !== runChatId) showCompletionBanner(runChatId);
+
+                    } else { 
+                        if (botEl) botEl.querySelector('.final-result-area').innerHTML = `<p>AI processing failed.</p>`; 
+                        updateMessageInHistory(runChatId, 'bot', 'running', "AI processing failed.", 'normal');
+                    }
                 }
             }
             if (!completed) await new Promise(r => setTimeout(r, 2000));
         } catch (e) { completed = true; }
     }
-    isRunning = false;
-    sendBtn.disabled = !userInput.value.trim();
+    activePolls.delete(runChatId);
+    if (currentChatId === runChatId) sendBtn.disabled = !userInput.value.trim();
 }
+
+function resumeActivePolls() {
+    conversations.forEach(chat => {
+        const runningMsg = chat.messages.find(m => m.type === 'running');
+        if (runningMsg && runningMsg.runId) {
+            console.log(`Resuming polling for Chat: ${chat.id}, Run: ${runningMsg.runId}`);
+            pollRun(runningMsg.runId, chat.id);
+        }
+    });
+}
+
 
 function formatTableHTML(data) {
     const parsed = parseKognitosValue(data);
